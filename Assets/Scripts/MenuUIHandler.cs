@@ -15,11 +15,4 @@ public class MenuUIHandler : MonoBehaviour
         MenuManager.Instance.nombre = name;
     }
 
-    public void Exit(){
-        #if UNITY_EDITOR
-            EditorApplication.ExitPlaymode();
-        #else
-            Application.Quit();
-        #endif
-    }
 }

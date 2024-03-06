@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -21,20 +24,23 @@ public class MainManager : MonoBehaviour
     public static MainManager Instance;
 
     public Text bestScoreText;
+
+    private int maxScore;
+
     private void Awake(){
 
-        if(MainManager.Instance != null){
+        if(Instance != null && Instance != this){
             Destroy(gameObject);
             return;
         }
 
-        MainManager.Instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
+        LoadData();
     }
     
     void Start()
     {
-        bestScoreText.text = "Best Score"+" : "+ MenuManager.Instance.nombre+ " : 0"; 
 
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
@@ -59,7 +65,8 @@ public class MainManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 m_Started = true;
-                float randomDirection = Random.Range(-1.0f, 1.0f);
+
+                float randomDirection = UnityEngine.Random.Range(-1.0f, 1.0f);
                 Vector3 forceDir = new Vector3(randomDirection, 1, 0);
                 forceDir.Normalize();
 
@@ -71,7 +78,9 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                Destroy(gameObject);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+               
             }
         }
     }
@@ -85,10 +94,35 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        if(maxScore < m_Points){
+            SaveData();
+        }
+        
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
 
-    
+  
+
+    public void SaveData(){
+        PlayerData data = new PlayerData();
+
+        data.nombre = MenuManager.Instance.nombre;
+        data.score = m_Points;
+
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json",json);
+
+    }
+
+    public void LoadData(){
+        string path = Application.persistentDataPath+"/savefile.json";
+        if(File.Exists(path)){
+            string json = File.ReadAllText(path);
+            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
+            maxScore = data.score;
+            MainManager.Instance.bestScoreText.text = "Best Score : "+ data.nombre + " : " + $"{data.score}";
+        }
+    }
 
 }
